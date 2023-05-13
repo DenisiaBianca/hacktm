@@ -9,7 +9,6 @@ import {
 } from "typeorm";
 import { Length, IsNotEmpty } from "class-validator";
 import * as bcrypt from "bcryptjs";
-import { validate } from "class-validator";
 import { RoleEnum } from "../helpers";
 
 @Entity()

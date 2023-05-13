@@ -36,6 +36,7 @@ export const getOneById = async (req: Request, res: Response) => {
 export const newUser = async (req: Request, res: Response) => {
   // Get parameters from the body
   const { username, password, role } = req.body;
+  console.log(req.body);
   const user = new User();
   user.username = username;
   user.encryptedPassword = password;

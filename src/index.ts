@@ -1,43 +1,64 @@
 import express from "express";
 import bodyParser from "body-parser";
-import { Request, Response } from "express";
 import { AppDataSource } from "./data-source";
-import { Routes } from "./routes";
-import { User } from "./entity/user";
 import swaggerUi from "swagger-ui-express";
 import swaggerJSDoc from "swagger-jsdoc";
-import router from "./routes/user";
+import router from "./routes";
+import mqtt from "mqtt";
+import cors from "cors";
+
+import dotenv from "dotenv";
+import "reflect-metadata";
+import { addCount, addNewRead } from "./helpers/counter-helper";
+import { CounterTypeEnum } from "./helpers";
+dotenv.config();
+
+const host = "localhost";
+const port = "1883";
+const clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
+
+const connectUrl = `mqtt://${host}:${port}`;
+export const client = mqtt.connect(connectUrl, {
+  clientId,
+  clean: true,
+  connectTimeout: 4000,
+  username: "admin",
+  password: "admin",
+  reconnectPeriod: 1000,
+});
+const topic = "gasSensor";
+
+client.on("connect", () => {
+  console.log("Connected");
+  client.subscribe([topic], () => {
+    console.log(`Subscribe to topic '${topic}'`);
+  });
+});
+client.on("message", (topic, payload) => {
+  // addNewRead(payload, topic);
+  console.log("Received Message:", topic, payload.toString());
+
+  if (topic === "gasSensor" && payload && payload.toString() != "") {
+    console.log("Received Message:", topic, payload.toString());
+
+    addCount(CounterTypeEnum.gas, 2, parseInt(payload.toString()));
+  }
+});
 
 AppDataSource.initialize()
   .then(async () => {
     // create express app
     const app = express();
-    app.use(bodyParser.json());
-    app.use(router);
-    // register express routes from defined application routes
-    Routes.forEach((route) => {
-      (app as any)[route.method](
-        route.route,
-        (req: Request, res: Response, next: Function) => {
-          const result = new (route.controller as any)()[route.action](
-            req,
-            res,
-            next
-          );
-          if (result instanceof Promise) {
-            result.then((result) =>
-              result !== null && result !== undefined
-                ? res.send(result)
-                : undefined
-            );
-          } else if (result !== null && result !== undefined) {
-            res.json(result);
-          }
-        }
-      );
-    });
 
-    // swagger docs
+    var corsOptions = {
+      origin: "*",
+      methods: "*",
+      headers: "*",
+    };
+    app.use(cors(corsOptions));
+    app.use(express.json());
+
+    app.use(bodyParser.json());
     app.use(
       "/api-docs",
       swaggerUi.serve,
@@ -46,9 +67,24 @@ AppDataSource.initialize()
           swaggerDefinition: {
             openapi: "3.0.0",
             info: {
-              title: "NodeJS API",
+              title: "Base API",
               version: "1.0.0",
             },
+            components: {
+              securitySchemes: {
+                jwt: {
+                  type: "http",
+                  scheme: "bearer",
+                  in: "header",
+                  bearerFormat: "JWT",
+                },
+              },
+            },
+            security: [
+              {
+                jwt: [],
+              },
+            ],
             servers: [
               {
                 url: "http://localhost:5000",
@@ -56,32 +92,13 @@ AppDataSource.initialize()
               },
             ],
           },
-          apis: ["./routes/**/*.ts", "./interfaces/**/*.ts"],
+          apis: ["./src/routes/**/*.ts", "./src/interfaces/**/*.ts"],
         })
       )
     );
-    // setup express app here
-    // ...
 
-    // start express server
+    app.use(router);
     app.listen(5000);
-
-    // insert new users for test
-    // await AppDataSource.manager.save(
-    //     AppDataSource.manager.create(User, {
-    //         firstName: "Timber",
-    //         lastName: "Saw",
-    //         age: 27
-    //     })
-    // )
-
-    // await AppDataSource.manager.save(
-    //     AppDataSource.manager.create(User, {
-    //         firstName: "Phantom",
-    //         lastName: "Assassin",
-    //         age: 24
-    //     })
-    // )
 
     console.log(
       "Express server has started on port 3000. Open http://localhost:5000/users to see results"

@@ -96,7 +96,7 @@ router.get("/:id([0-9]+)", [checkJwt, checkRole(["ADMIN"])], getOneById);
  *             schema:
  *              $ref: '#/components/schemas/ApiError'
  */
-router.post("/add", [checkJwt, checkRole(["ADMIN"])], newUser);
+router.post("/add", newUser);
 
 // Edit one user
 /**

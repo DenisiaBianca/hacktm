@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { User } from "./entity/user";
+import { CounterRead } from "./entity/counter-read";
 
 export const AppDataSource = new DataSource({
   type: "mysql",
@@ -11,7 +12,7 @@ export const AppDataSource = new DataSource({
   database: "node",
   synchronize: true,
   logging: false,
-  entities: [User],
+  entities: [User, CounterRead],
   migrations: [],
   subscribers: [],
 });

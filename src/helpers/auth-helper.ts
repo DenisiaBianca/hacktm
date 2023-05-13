@@ -9,7 +9,7 @@ export const login = async (req: Request, res: Response) => {
   // Check if username and password are set
   const { username, password } = req.body;
   if (!(username && password)) {
-    res.status(400).send();
+    return res.status(400).send();
   }
   // Get user from database
   let user: User;
@@ -20,7 +20,9 @@ export const login = async (req: Request, res: Response) => {
   } catch (error) {
     return res.status(404).send("Userul nu exista.");
   }
-
+  if (!user) {
+    return res.status(400).send();
+  }
   // Check if encrypted password match
   if (!user.checkIfUnencryptedPasswordIsValid(password)) {
     return res.status(401).send("Parola este incorecta.");
