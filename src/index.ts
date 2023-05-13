@@ -42,6 +42,17 @@ client.on("message", (topic, payload) => {
     console.log("Received Message:", topic, payload.toString());
 
     addCount(CounterTypeEnum.gas, 2, parseInt(payload.toString()));
+    addCount(
+      CounterTypeEnum.water,
+      2,
+      parseInt(payload.toString()) - Math.random() * 10
+    );
+    addCount(CounterTypeEnum.gas, 3, parseInt(payload.toString()) / 10);
+    addCount(
+      CounterTypeEnum.water,
+      3,
+      parseInt(payload.toString()) - (Math.random() * 10) / 2
+    );
   }
 });
 

@@ -39,14 +39,22 @@ export const getUserData = async (req: Request, res: Response) => {
   const orderedGasCounters = gasCounters.sort(
     (a, b) => a.date.getTime() - b.date.getTime()
   );
+  const orderedWaterCounters = waterCounters.sort(
+    (a, b) => a.date.getTime() - b.date.getTime()
+  );
   orderedGasCounters.forEach((data, i) =>
     dailyGasUsage.push({
       day: data.date,
-      value: data.value - orderedGasCounters[i > 0 ? i - 1 : i].value,
+      value: Math.abs(data.value - orderedGasCounters[i > 0 ? i - 1 : i].value),
     })
   );
-  waterCounters.forEach((data) =>
-    dailyWaterUsage.push({ day: data.date, value: data.value })
+  orderedWaterCounters.forEach((data, i) =>
+    dailyWaterUsage.push({
+      day: data.date,
+      value: Math.abs(
+        data.value - orderedWaterCounters[i > 0 ? i - 1 : i].value
+      ),
+    })
   );
 
   try {
@@ -54,9 +62,10 @@ export const getUserData = async (req: Request, res: Response) => {
 
     if (gasCounters.length > 0) {
       gasData = {
-        currentRead: gasCounters[gasCounters.length - 1].value,
-        monthTotal:
-          gasCounters[gasCounters.length - 1].value - gasCounters[0].value,
+        currentRead: Math.abs(gasCounters[gasCounters.length - 1].value),
+        monthTotal: Math.abs(
+          gasCounters[gasCounters.length - 1].value - gasCounters[0].value
+        ),
         dailyUsage: dailyGasUsage,
       };
     }
@@ -64,10 +73,10 @@ export const getUserData = async (req: Request, res: Response) => {
     let waterData: IData;
     if (waterCounters.length > 0) {
       waterData = {
-        currentRead: waterCounters[waterCounters.length - 1].value,
-        monthTotal:
-          waterCounters[waterCounters.length - 1].value -
-          waterCounters[0].value,
+        currentRead: Math.abs(waterCounters[waterCounters.length - 1].value),
+        monthTotal: Math.abs(
+          waterCounters[waterCounters.length - 1].value - waterCounters[0].value
+        ),
         dailyUsage: dailyWaterUsage,
       };
     }
